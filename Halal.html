@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Halal Ingredient & E-Code Detector</title>
+  <style>
+    :root {
+      --bg-body: #f1f5f9;
+      --bg-card: #ffffff;
+      --bg-subtle: #e2e8f0;
+      --primary-blue: #0284c7;
+      --primary-light: #e0f2fe;
+      --primary-hover: #0369a1;
+      --text-dark: #1e293b;
+      --text-muted: #64748b;
+      --border-color: #cbd5e1;
+      
+      /* Status Colors */
+      --halal-bg: #dcfce7;
+      --halal-text: #166534;
+      --haram-bg: #fee2e2;
+      --haram-text: #991b1b;
+      --mushbooh-bg: #fef3c7;
+      --mushbooh-text: #92400e;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-body);
+      color: var(--text-dark);
+      line-height: 1.6;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      background: var(--bg-card);
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+    }
+
+    header {
+      background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+      padding: 28px 24px;
+      border-bottom: 1px solid var(--border-color);
+      text-align: center;
+    }
+
+    header h1 {
+      color: #0c4a6e;
+      font-size: 1.75rem;
+      margin-bottom: 6px;
+    }
+
+    header p {
+      color: #334155;
+      font-size: 0.95rem;
+    }
+
+    .main-content {
+      padding: 24px;
+    }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 600px) {
+      .controls-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 16px;
+    }
+
+    label {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--text-dark);
+      margin-bottom: 6px;
+    }
+
+    select, textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background-color: #f8fafc;
+      color: var(--text-dark);
+      font-size: 0.95rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary-blue);
+      box-shadow: 0 0 0 3px var(--primary-light);
+      background-color: var(--bg-card);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 110px;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    button {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s;
+    }
+
+    button:active {
+      transform: scale(0.99);
+    }
+
+    .btn-primary {
+      background-color: var(--primary-blue);
+      color: white;
+      flex: 2;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-secondary {
+      background-color: var(--bg-subtle);
+      color: var(--text-dark);
+      flex: 1;
+    }
+
+    .btn-secondary:hover {
+      background-color: #cbd5e1;
+    }
+
+    /* Results Area */
+    .results-section {
+      margin-top: 28px;
+      border-top: 1px solid var(--border-color);
+      padding-top: 24px;
+      display: none;
+    }
+
+    .overall-banner {
+      padding: 16px 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 600;
+    }
+
+    .banner-halal {
+      background-color: var(--halal-bg);
+      color: var(--halal-text);
+      border: 1px solid #86efac;
+    }
+
+    .banner-haram {
+      background-color: var(--haram-bg);
+      color: var(--haram-text);
+      border: 1px solid #fca5a5;
+    }
+
+    .banner-mushbooh {
+      background-color: var(--mushbooh-bg);
+      color: var(--mushbooh-text);
+      border: 1px solid #fcd34d;
+    }
+
+    .ingredient-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .ingredient-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 14px;
+      background-color: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      gap: 12px;
+    }
+
+    .item-info h4 {
+      font-size: 1rem;
+      color: var(--text-dark);
+      text-transform: capitalize;
+    }
+
+    .item-info p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .badge {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .badge-halal { background: var(--halal-bg); color: var(--halal-text); }
+    .badge-haram { background: var(--haram-bg); color: var(--haram-text); }
+    .badge-mushbooh { background: var(--mushbooh-bg); color: var(--mushbooh-text); }
+
+    footer {
+      background-color: #f8fafc;
+      padding: 14px 24px;
+      border-top: 1px solid var(--border-color);
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>Halal Ingredient Detector</h1>
+      <p>Verify food ingredients and E-codes instantly</p>
+    </header>
+
+    <div class="main-content">
+      <!-- Options Grid -->
+      <div class="controls-grid">
+        <div class="form-group">
+          <label for="sampleSelect">Load Sample Product</label>
+          <select id="sampleSelect">
+            <option value="">-- Choose a sample --</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="filterSelect">Filter Results</label>
+          <select id="filterSelect">
+            <option value="ALL">Show All Ingredients</option>
+            <option value="HARAM">Haram Only</option>
+            <option value="MUSHBOOH">Mushbooh (Doubtful) Only</option>
+            <option value="HALAL">Halal Only</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Input Area -->
+      <div class="form-group">
+        <label for="ingredientInput">Enter Ingredients (comma-separated)</label>
+        <textarea 
+          id="ingredientInput" 
+          placeholder="e.g., Water, Sugar, E120, Gelatin, Soy Lecithin, E471, Vanilla Extract..."
+        ></textarea>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="btn-group">
+        <button id="checkBtn" class="btn-primary">Analyze Ingredients</button>
+        <button id="clearBtn" class="btn-secondary">Clear</button>
+      </div>
+
+      <!-- Results Display -->
+      <section id="resultsSection" class="results-section">
+        <div id="overallBanner" class="overall-banner"></div>
+        <ul id="ingredientList" class="ingredient-list"></ul>
+      </section>
+    </div>
+
+    <footer>
+      Note: Always verify certified Halal logos on packaging, as sources for E-codes (like E471) vary by manufacturer.
+    </footer>
+  </div>
+
+  <script>
+    // 1. DATA ARRAYS
+    const ingredientDatabase = [
+      { keywords: ["pork", "lard", "bacon", "ham", "swine"], status: "HARAM", reason: "Derived from swine, strictly prohibited." },
+      { keywords: ["alcohol", "ethanol", "wine", "beer", "rum", "liquor"], status: "HARAM", reason: "Intoxicant alcohol is prohibited." },
+      { keywords: ["e120", "carmine", "cochineal"], status: "HARAM", reason: "Red dye extracted from crushed insects." },
+      { keywords: ["e904", "shellac"], status: "MUSHBOOH", reason: "Resin secreted by lac bugs; scholarly opinions differ." },
+      { keywords: ["gelatin", "gelatine", "e441"], status: "MUSHBOOH", reason: "Often derived from pork or non-Zabihah beef unless certified Halal/fish-based." },
+      { keywords: ["e471", "mono- and diglycerides", "glycerin", "glycerol", "e422"], status: "MUSHBOOH", reason: "Can be derived from either plant oils or animal fats." },
+      { keywords: ["rennet", "pepsin", "enzymes"], status: "MUSHBOOH", reason: "May come from animal stomach linings or microbial sources." },
+      { keywords: ["vanilla extract"], status: "MUSHBOOH", reason: "Traditional extracts are brewed using ethyl alcohol." },
+      { keywords: ["whey", "lard substitute"], status: "MUSHBOOH", reason: "Whey processing may use non-halal animal rennet." },
+      { keywords: ["water", "sugar", "salt", "flour", "wheat", "corn", "rice", "oats"], status: "HALAL", reason: "Pure plant/mineral origin." },
+      { keywords: ["soy lecithin", "e322", "sunflower lecithin"], status: "HALAL", reason: "Derived from plants (soybeans or sunflower seeds)." },
+      { keywords: ["citric acid", "e330", "ascorbic acid", "e300", "pectin", "e440"], status: "HALAL", reason: "Plant or fermentation derived." },
+      { keywords: ["agar", "e406", "carrageenan", "e407", "guar gum", "e412", "xanthan gum", "e415"], status: "HALAL", reason: "Plant/seaweed-based thickeners and stabilizers." },
+      { keywords: ["vegetable oil", "palm oil", "olive oil", "canola oil", "cocoa butter"], status: "HALAL", reason: "100% plant-derived fats." }
+    ];
+
+    const sampleProducts = [
+      {
+        name: "Gummy Candies (Standard)",
+        ingredients: "Sugar, Glucose Syrup, Water, Gelatin, Citric Acid, E120, Carnauba Wax, Natural Flavors"
+      },
+      {
+        name: "Chocolate Chip Cookies",
+        ingredients: "Wheat Flour, Sugar, Palm Oil, Cocoa Mass, Soy Lecithin, E471, Salt, Vanilla Extract, Baking Soda"
+      },
+      {
+        name: "Fruit Juice Drink",
+        ingredients: "Water, Apple Juice Concentrate, Sugar, Citric Acid, Ascorbic Acid, Pectin"
+      }
+    ];
+
+    // 2. DOM ELEMENTS
+    const sampleSelect = document.getElementById("sampleSelect");
+    const filterSelect = document.getElementById("filterSelect");
+    const ingredientInput = document.getElementById("ingredientInput");
+    const checkBtn = document.getElementById("checkBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const resultsSection = document.getElementById("resultsSection");
+    const overallBanner = document.getElementById("overallBanner");
+    const ingredientList = document.getElementById("ingredientList");
+
+    let lastAnalyzedResults = [];
+
+    // 3. INITIALIZATION FUNCTION
+    function initApp() {
+      populateSampleDropdown();
+      attachEventListeners();
+    }
+
+    function populateSampleDropdown() {
+      sampleProducts.forEach((product, index) => {
+        const option = document.createElement("option");
+        option.value = index;
+        option.textContent = product.name;
+        sampleSelect.appendChild(option);
+      });
+    }
+
+    function attachEventListeners() {
+      sampleSelect.addEventListener("change", handleSampleSelection);
+      filterSelect.addEventListener("change", renderFilteredResults);
+      checkBtn.addEventListener("click", handleAnalyze);
+      clearBtn.addEventListener("click", handleClear);
+    }
+
+    // 4. CORE LOGIC FUNCTIONS
+    function handleSampleSelection(event) {
+      const selectedIndex = event.target.value;
+      if (selectedIndex !== "") {
+        ingredientInput.value = sampleProducts[selectedIndex].ingredients;
+        handleAnalyze();
+      }
+    }
+
+    function parseIngredients(rawText) {
+      return rawText
+        .split(/,|\n/)
+        .map(item => item.trim())
+        .filter(item => item.length > 0);
+    }
+
+    function evaluateIngredient(ingredientName) {
+      const lowerName = ingredientName.toLowerCase();
+
+      for (const entry of ingredientDatabase) {
+        const isMatch = entry.keywords.some(keyword => 
+          lowerName === keyword || lowerName.includes(keyword)
+        );
+        if (isMatch) {
+          return {
+            name: ingredientName,
+            status: entry.status,
+            reason: entry.reason
+          };
+        }
+      }
+
+      return {
+        name: ingredientName,
+        status: "MUSHBOOH",
+        reason: "Not found in database. Please verify source with manufacturer."
+      };
+    }
+
+    function determineOverallStatus(results) {
+      if (results.some(item => item.status === "HARAM")) {
+        return {
+          status: "HARAM",
+          text: "Overall Status: HARAM (Contains prohibited ingredients)",
+          className: "banner-haram"
+        };
+      }
+      if (results.some(item => item.status === "MUSHBOOH")) {
+        return {
+          status: "MUSHBOOH",
+          text: "Overall Status: MUSHBOOH (Contains doubtful/unverified ingredients)",
+          className: "banner-mushbooh"
+        };
+      }
+      return {
+        status: "HALAL",
+        text: "Overall Status: HALAL (All listed ingredients appear permissible)",
+        className: "banner-halal"
+      };
+    }
+
+    // 5. RENDERING & UI HANDLERS
+    function handleAnalyze() {
+      const rawText = ingredientInput.value;
+      const parsedItems = parseIngredients(rawText);
+
+      if (parsedItems.length === 0) {
+        alert("Please enter at least one ingredient or select a sample product.");
+        return;
+      }
+
+      lastAnalyzedResults = parsedItems.map(evaluateIngredient);
+      
+      const overall = determineOverallStatus(lastAnalyzedResults);
+      overallBanner.className = `overall-banner ${overall.className}`;
+      overallBanner.textContent = overall.text;
+
+      renderFilteredResults();
+      resultsSection.style.display = "block";
+    }
+
+    function renderFilteredResults() {
+      const filterValue = filterSelect.value;
+      ingredientList.innerHTML = "";
+
+      const filteredItems = lastAnalyzedResults.filter(item => {
+        if (filterValue === "ALL") return true;
+        return item.status === filterValue;
+      });
+
+      if (filteredItems.length === 0) {
+        ingredientList.innerHTML = `<li class="ingredient-item"><div class="item-info"><p>No ingredients match the selected filter.</p></div></li>`;
+        return;
+      }
+
+      filteredItems.forEach(item => {
+        const li = document.createElement("li");
+        li.className = "ingredient-item";
+
+        const badgeClass = `badge-${item.status.toLowerCase()}`;
+
+        li.innerHTML = `
+          <div class="item-info">
+            <h4>${escapeHTML(item.name)}</h4>
+            <p>${escapeHTML(item.reason)}</p>
+          </div>
+          <span class="badge ${badgeClass}">${item.status}</span>
+        `;
+        ingredientList.appendChild(li);
+      });
+    }
+
+    function handleClear() {
+      ingredientInput.value = "";
+      sampleSelect.value = "";
+      filterSelect.value = "ALL";
+      lastAnalyzedResults = [];
+      resultsSection.style.display = "none";
+    }
+
+    function escapeHTML(str) {
+      const div = document.createElement("div");
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // Start Application
+    initApp();
+  </script>
+</body>
+</html>
